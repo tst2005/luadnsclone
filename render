@@ -1,0 +1,32 @@
+#!/usr/bin/env lua
+
+local luadns = require "luadns"
+local env = luadns.env
+local output = luadns.output
+local ORIGIN, TTL, SOA = luadns.ORIGIN, luadns.TTL, luadns.SOA
+
+local a1 = ... or false
+if not a1 then
+	print("Usage: render path/to/zone.lua")
+	os.exit(1)
+end
+
+luadns.env_rw.TTL = assert(TTL)
+luadns.env_rw.SOA = assert(SOA)
+
+local function main(zonefile, env)
+	local dom = assert(zonefile:gsub("%.lua$", "."):gsub("^.*/", ""))
+	ORIGIN(dom)
+	assert(env._a)
+
+	--TTL("1h")
+	--SOA(dom, "ns1.dom.tld.", "user.dom.tld.", "2007120710", "1d", "2h", "4w", "1h")
+
+	if setfenv then
+		local f, e = loadfile(zonefile)
+		setfenv(f, env)()
+	else
+		loadfile(zonefile, nil, env)()
+	end
+end
+main(a1, env)
