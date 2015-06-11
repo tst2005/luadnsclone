@@ -11,6 +11,7 @@ if not a1 then
 	os.exit(1)
 end
 
+-- expose TTL and SOA
 luadns.env_rw.TTL = assert(TTL)
 luadns.env_rw.SOA = assert(SOA)
 

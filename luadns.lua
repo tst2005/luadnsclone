@@ -186,6 +186,8 @@ end
 local function srv(name, target, port, prio, weight, ttl)
 	output( name, ttl or _hide, "IN SRV", prio or 0, weight or 0, port, target)
 end
+--Note: As in MX records, the target in SRV records must point to hostname with an address record (A or AAAA record). Pointing to a hostname with a CNAME record is not a valid configuration.
+-- source: https://en.wikipedia.org/wiki/SRV_record
 
 -- @name        = relative name
 -- @algorithm   = algorithm number (1=RSA, 2=DSA, 3=ECDSA)
