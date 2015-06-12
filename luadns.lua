@@ -12,13 +12,13 @@ local function _cleanargs(...)
 			new[#new+1] = assert(v)
 		end
 	end
-	return table.concat(new, " ")
+	return new
 end
-assert(_cleanargs(1, 2, 3) == "1 2 3")
-assert(_cleanargs(1, _hide, 3) == "1 3")
+assert(table.concat(_cleanargs(1, 2, 3), " ") == "1 2 3")
+assert(table.concat(_cleanargs(1, _hide, 3), " ") == "1 3")
 
 local function output(...)
-	print(_cleanargs(...))
+	print(table.concat(_cleanargs(...), " "))
 end
 
 
@@ -140,25 +140,23 @@ local function soa(_origin, _ns, _email, _serial, ...)
 end
 ]]--
 
+local tconcat = table.concat
+
 -- Not available in the original LuaDNS
 local function soa(_origin, _ns, _email, _serial, _refresh, _retry, _expiration, _minimum)
---	local _refresh		= _refresh	or "1d"
---	local _retry		= _retry	or "2h"
---	local _expiration	= _expiration	or "4w"
---	local _minimum		= _minimum	or "1h"
+	local _refresh		= _refresh	or "1d"
+	local _retry		= _retry	or "2h"
+	local _expiration	= _expiration	or "4w"
+	local _minimum		= _minimum	or "1h"
 
 	output(
-		_origin,
-		"IN SOA",
-		assert(_ns),
-		assert(_email),
-		"(",
+		_origin, "IN SOA", assert(_ns), assert(_email), tconcat( _cleanargs("(",
 			assert(_serial),
-			_refresh or _hide,
-			_retry or _hide,
-			_expiration or _hide,
-			_minimum or _hide,
-		")"
+			_refresh or "ERROR",
+			_retry or "ERROR",
+			_expiration or "ERROR",
+			_minimum or "ERROR",
+		")"), "\n")
 	)
 end
 
@@ -267,15 +265,17 @@ _sip._udp               SRV     0 0 5060 sip.example.com.
 
 -- ORIGIN("dom.tld.") Note: with final .
 local function ORIGIN(dom)
-	local comm = "; designates the start of this zone file in the namespace"
-	output("$ORIGIN", assert(dom), comm)
+	--local comm = "; designates the start of this zone file in the namespace"
+	--output("$ORIGIN", assert(dom), comm)
+	output("$ORIGIN", assert(dom))
 	env._a = assert(dom)
 end
 
 -- TTL("1h")
 local function TTL(ttl)
-	local comm = "; default expiration time of all resource records without their own TTL value"
-	output("$TTL", assert(ttl), comm)
+	--local comm = "; default expiration time of all resource records without their own TTL value"
+	--output("$TTL", assert(ttl), comm)
+	output("$TTL", assert(ttl))
 end
 
 -- SOA(...)
