@@ -1,4 +1,16 @@
-#!/usr/bin/env lua
+#!/bin/sh
+
+_=[[
+	: ${BIN:="$(command -v luajit)"}
+	: ${BIN:="$(command -v lua5.2)"}
+	: ${BIN:="$(command -v lua5.1)"}
+	: ${BIN:="$(command -v lua)"}
+	#LUA_PATH="./?.lua;./?/init.lua;;"
+	#export LUA_PATH
+	exec "${BIN}" "$0" "$@"
+	exit $?
+]]
+_=nil
 
 local luadns = require "luadns"
 local env = luadns.env
