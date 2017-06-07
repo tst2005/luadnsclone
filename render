@@ -28,7 +28,7 @@ luadns.env_rw.TTL = assert(TTL)
 luadns.env_rw.SOA = assert(SOA)
 
 local function main(zonefile, env)
-	local dom = assert(zonefile:gsub("%.lua$", "."):gsub("^.*/", ""))
+	local dom = assert(zonefile:gsub("%.lua$", ""):gsub("%.*$", "."):gsub("^.*/", ""))
 	ORIGIN(dom)
 	assert(env._a)
 
