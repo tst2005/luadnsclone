@@ -18,7 +18,7 @@ assert(table.concat(_cleanargs(1, 2, 3), " ") == "1 2 3")
 assert(table.concat(_cleanargs(1, _hide, 3), " ") == "1 3")
 
 local function output(...)
-	print(table.concat(_cleanargs(...), " "))
+	print(table.concat(_cleanargs(...), "\t"))
 end
 
 
@@ -129,6 +129,37 @@ local function redirect(name, target, mode, ttl)
 	assert(name)
 	assert(target)
 	--
+end
+
+
+-- serial format :
+--         ...n (1, 2, ...)
+--     YYYYMMDD
+--   YYYYMMDDrr            <-- mostly used
+-- [n]nnnnnnnnn (unixtime) <-- mostly used
+--    946681200 (2000)
+--   9999999999 (2286)
+
+local function checkserial(serial)
+	serial = tostring(serial)
+	local now = os.date("%Y%m%d")
+	local md = os.date("%m%d")
+	local ok = true
+	if serial:gsub("^([12][0-9][0-9][0-9])([0-1][0-9])(0-3][0-9])([0-9][0-9])$", function(yyyy, mm, dd, rr)
+		local y_delta math.abs( tonumber(os.date("%Y")) - tonumber(yyyy) )
+		if y_delta > 50 then -- serial not updated for 50 years, really ?
+			ok = false
+		elseif tonumber(dd) > 31 then
+			ok = false
+		elseif tonumber(mm) > 12 then
+			ok = false
+		end
+		return "" --yyyy..mm..dd..rr
+	end) then
+
+	end
+
+--	local serial_yyyymmdd = serial:sub(1,8)
 end
 
 --[[
