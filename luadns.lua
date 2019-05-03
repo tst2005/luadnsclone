@@ -10,12 +10,14 @@ local function _cleanargs(...)
 	for i,v in ipairs(old) do
 		if v ~= _hide then
 			new[#new+1] = assert(v)
+		else
+			new[#new+1] = ""
 		end
 	end
 	return new
 end
-assert(table.concat(_cleanargs(1, 2, 3), " ") == "1 2 3")
-assert(table.concat(_cleanargs(1, _hide, 3), " ") == "1 3")
+--assert(table.concat(_cleanargs(1, 2, 3), " ") == "1 2 3")
+--assert(table.concat(_cleanargs(1, _hide, 3), " ") == "1 3")
 
 local function output(...)
 	print(table.concat(_cleanargs(...), "\t"))
@@ -53,7 +55,7 @@ local function a(name, ip, ttl)
 	if not ttl then
 		-- We should set a default value to force to use it... but no, bind support line without TTL.
 	end
-	output(name, ttl or _hide, "IN A", ip)
+	output(name, ttl or _hide, "IN	A", "", ip)
 end
 
 
@@ -65,7 +67,7 @@ local function aaaa(name, ip, ttl)
 	if ttl then
 		-- We should set a default value to force to use it... but no, bind support line without TTL.
 	end
-	output(name, ttl or _hide, "IN AAAA", ip)
+	output(name, ttl or _hide, "IN	AAAA", "", ip)
 end
 
 -- @name   = relative name
@@ -83,7 +85,7 @@ end
 local function cname(name, alias, ttl)
 	assert(name)
 	assert(alias)
-	output(name, ttl or _hide, "IN CNAME", alias)
+	output(name, ttl or _hide, "IN", "CNAME","", alias)
 end
 
 -- @from    = mailbox name (without domain)
@@ -100,7 +102,7 @@ end
 local function mx(name, exchanger, prio, ttl)
 	assert(name)
 	assert(exchanger)
-	output(name, ttl or _hide, "IN MX", prio or 0, exchanger)
+	output(name, ttl or _hide, "IN	MX", prio or 0, exchanger)
 end
 
 -- @name    = relative name
@@ -109,7 +111,8 @@ end
 local function ns(name, server, ttl)
 	assert(name)
 	assert(server)
-	output(name, ttl or _hide, "IN NS", server)
+	assert( server:find("%.$"), "NS: server name does not end with a dot ?!")
+	output(name, ttl or _hide, "IN", "NS", "", server)
 end
 
 -- @name  = relative name
@@ -118,7 +121,7 @@ end
 local function ptr(name, host, ttl)
 	assert(name)
 	assert(host)
-	output(name, ttl or _hide, "IN PTR", host)
+	output(name, ttl or _hide, "IN	PTR", host)
 end
 
 -- @name   = relative name
@@ -180,14 +183,15 @@ local function soa(_origin, _ns, _email, _serial, _refresh, _retry, _expiration,
 	local _expiration	= _expiration	or "4w"
 	local _minimum		= _minimum	or "1h"
 
+	local soa_content_indent="\t"
 	output(
-		_origin, "IN SOA", assert(_ns), assert(_email), tconcat( _cleanargs("(",
+		_origin, "", "IN	SOA", assert(_ns), assert(_email), tconcat( _cleanargs("(",
 			assert(_serial),
-			_refresh or "ERROR",
-			_retry or "ERROR",
-			_expiration or "ERROR",
-			_minimum or "ERROR",
-		")"), "\n")
+			assert(_refresh) or "ERROR",
+			assert(_retry) or "ERROR",
+			assert(_expiration) or "ERROR",
+			assert(_minimum) or "ERROR"
+		), "\n"..soa_content_indent).."\n)"
 	)
 end
 
@@ -196,7 +200,7 @@ end
 -- @ttl     = TTL (default: user default TTL)
 local function txt(name, text, ttl)
 	assert(name)
-	output(name, ttl or _hide, "IN TXT", '"'..text..'"')
+	output(name, ttl or _hide, "IN	TXT", '"'..text..'"')
 end
 
 -- @name    = relative name
@@ -213,7 +217,7 @@ end
 -- @weight  = weight (default: 0)
 -- @ttl     = TTL (default: user default TTL)
 local function srv(name, target, port, prio, weight, ttl)
-	output( name, ttl or _hide, "IN SRV", prio or 0, weight or 0, port, target)
+	output( name, ttl or _hide, "IN	SRV", prio or 0, weight or 0, port, target)
 end
 --Note: As in MX records, the target in SRV records must point to hostname with an address record (A or AAAA record). Pointing to a hostname with a CNAME record is not a valid configuration.
 -- source: https://en.wikipedia.org/wiki/SRV_record
@@ -254,9 +258,9 @@ end
 ; Zone: example.org
 
 ; Default origin is computed from the file name,
-; you may change the origin with $ORIGIN directive
+; you may change the origin with $ORIGIN	directive
 ; Example:
-; $ORIGIN example.org.
+; $ORIGIN	example.org.
 
 ; Default TTL is account's [default TTL](https://api.luadns.com/users/edit),
 ; you may change the default TTL with $TTL directive
@@ -265,7 +269,7 @@ end
 
 ; The system will generate and maintain domain's SOA record automatically,
 ; SOA records found in *.bind files are simply ignored
-example.org.        IN  SOA   ns1.bind.net.   hostmaster.bind.net.  (
+example.org.        IN	 SOA   ns1.bind.net.   hostmaster.bind.net.  (
                               2012050901  ; serial
                               20m         ; refresh (20 minutes)
                               2m          ; retry (2 minutes)
@@ -309,6 +313,10 @@ local function TTL(ttl)
 	output("$TTL", assert(ttl))
 end
 
+local function comment(comm)
+	output(";"..tostring(comm))
+end
+
 -- SOA(...)
 local SOA = assert(soa)
 
@@ -316,6 +324,7 @@ env = {
 concat=concat,
 a=a, aaaa=aaaa, alias=alias, cname=cname, forward=forward, mx=mx, ns=ns, ptr=ptr, redirect=redirect, soa=soa, spf=spf, srv=srv, sshfp=sshfp, txt=txt,
 slave=slave,
+comment=comment,
 }
 
 env.assert = assert
