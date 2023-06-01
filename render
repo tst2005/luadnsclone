@@ -5,8 +5,8 @@ _=[[
 	: ${BIN:="$(command -v lua5.2)"}
 	: ${BIN:="$(command -v lua5.1)"}
 	: ${BIN:="$(command -v lua)"}
-	#LUA_PATH="./?.lua;./?/init.lua;;"
-	#export LUA_PATH
+	LUA_PATH="$(dirname "$0")/?.lua;$(dirname "$0")/?/init.lua;;"
+	export LUA_PATH
 	exec "${BIN}" "$0" "$@"
 	exit $?
 ]]
