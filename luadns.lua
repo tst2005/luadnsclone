@@ -23,6 +23,10 @@ local function output(...)
 	print(table.concat(_cleanargs(...), "\t"))
 end
 
+local function comment(comm)
+	output(";"..tostring(comm))
+end
+
 
 
 -- See at http://www.luadns.com/help.html
@@ -55,7 +59,14 @@ local function a(name, ip, ttl)
 	if not ttl then
 		-- We should set a default value to force to use it... but no, bind support line without TTL.
 	end
-	output(name, ttl or _hide, "IN	A", "", ip)
+	if type(ip) == "table" then
+		ip = ip.v4
+	end
+	if ip then
+		output(name, ttl or _hide, "IN	A", "", ip)
+	else
+		comment("WARNING: no ipv4 for "..name)
+	end
 end
 
 
@@ -67,7 +78,14 @@ local function aaaa(name, ip, ttl)
 	if ttl then
 		-- We should set a default value to force to use it... but no, bind support line without TTL.
 	end
-	output(name, ttl or _hide, "IN	AAAA", "", ip)
+	if type(ip) == "table" then
+		ip = ip.v6
+	end
+	if ip then
+		output(name, ttl or _hide, "IN	AAAA", "", ip)
+	else
+		comment("WARNING: no ipv6 for "..tostring(name))
+	end
 end
 
 -- @name   = relative name
@@ -313,10 +331,6 @@ local function TTL(ttl)
 	output("$TTL", assert(ttl))
 end
 
-local function comment(comm)
-	output(";"..tostring(comm))
-end
-
 -- SOA(...)
 local SOA = assert(soa)
 
@@ -325,6 +339,7 @@ concat=concat,
 a=a, aaaa=aaaa, alias=alias, cname=cname, forward=forward, mx=mx, ns=ns, ptr=ptr, redirect=redirect, soa=soa, spf=spf, srv=srv, sshfp=sshfp, txt=txt,
 slave=slave,
 comment=comment,
+table={concat=table.concat},
 }
 
 env.assert = assert
